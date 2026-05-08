@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Preprocess Studio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="/static/style.css"/>
+</head>
+<body>
+
+<div class="app-shell">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="logo">
+      <span class="logo-icon">⬡</span>
+      <span class="logo-text">Preprocess<br/><strong>Studio</strong></span>
+    </div>
+    <nav class="nav">
+      <a class="nav-item active" data-section="upload" onclick="showSection('upload')">
+        <span class="nav-icon">↑</span> Upload
+      </a>
+      <a class="nav-item" data-section="explore" onclick="showSection('explore')">
+        <span class="nav-icon">◈</span> Explore
+      </a>
+      <a class="nav-item" data-section="visualize" onclick="showSection('visualize')">
+        <span class="nav-icon">◎</span> Visualize
+      </a>
+      <a class="nav-item" data-section="train" onclick="showSection('train')">
+        <span class="nav-icon">⚙</span> Train
+      </a>
+      <a class="nav-item" data-section="predict" onclick="showSection('predict')">
+        <span class="nav-icon">▶</span> Predict
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="status-dot" id="statusDot"></div>
+      <span id="statusLabel">No dataset</span>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="main-content">
+
+    <!-- ===== UPLOAD SECTION ===== -->
+    <section class="section active" id="sec-upload">
+      <div class="section-header">
+        <h1>Upload Dataset</h1>
+        <p class="subtitle">Import a CSV file to get started</p>
+      </div>
+
+      <div class="upload-zone" id="uploadZone">
+        <div class="upload-icon">⬆</div>
+        <p class="upload-text">Drag & drop your CSV here</p>
+        <p class="upload-sub">or click to browse</p>
+        <input id="fileInput" type="file" accept=".csv" style="display:none"/>
+      </div>
+
+      <div class="card" style="margin-top:24px" id="uploadStatusCard" style="display:none">
+        <div id="uploadStatus" class="upload-status"></div>
+      </div>
+    </section>
+
+    <!-- ===== EXPLORE SECTION ===== -->
+    <section class="section" id="sec-explore">
+      <div class="section-header">
+        <h1>Explore Dataset</h1>
+        <p class="subtitle">Schema, statistics & sample rows</p>
+      </div>
+
+      <div class="stats-grid" id="statsGrid"></div>
+
+      <div class="tabs" style="margin-top:24px">
+        <button class="tab active" onclick="switchTab(this,'tab-schema')">Schema</button>
+        <button class="tab" onclick="switchTab(this,'tab-stats')">Statistics</button>
+        <button class="tab" onclick="switchTab(this,'tab-sample')">Sample Data</button>
+        <button class="tab" onclick="switchTab(this,'tab-missing')">Missing Values</button>
+      </div>
+
+      <div id="tab-schema" class="tab-panel active card">
+        <table class="data-table" id="schemaTable"></table>
+      </div>
+      <div id="tab-stats" class="tab-panel card" style="display:none">
+        <div id="statsTable" class="stats-scroll"></div>
+      </div>
+      <div id="tab-sample" class="tab-panel card" style="display:none">
+        <div id="sampleTable" class="table-scroll"></div>
+      </div>
+      <div id="tab-missing" class="tab-panel card" style="display:none">
+        <div id="missingBars"></div>
+      </div>
+    </section>
+
+    <!-- ===== VISUALIZE SECTION ===== -->
+    <section class="section" id="sec-visualize">
+      <div class="section-header">
+        <h1>Visualize</h1>
+        <p class="subtitle">Explore distributions and correlations</p>
+      </div>
+
+      <div class="controls-row card">
+        <div class="control-group">
+          <label>Chart Type</label>
+          <select id="plotType" onchange="updatePlotControls()">
+            <option value="heatmap">Correlation Heatmap</option>
+            <option value="scatter">Scatter Plot</option>
+            <option value="bar">Bar Chart</option>
+            <option value="box">Box Plot</option>
+            <option value="histogram">Histogram</option>
+          </select>
+        </div>
+        <div class="control-group" id="ctrl-x" style="display:none">
+          <label>X Axis</label>
+          <select id="plotX"></select>
+        </div>
+        <div class="control-group" id="ctrl-y" style="display:none">
+          <label>Y Axis</label>
+          <select id="plotY"></select>
+        </div>
+        <div class="control-group" id="ctrl-hue" style="display:none">
+          <label>Color by</label>
+          <select id="plotHue"><option value="None">None</option></select>
+        </div>
+        <button class="btn-primary" onclick="generatePlot()">Generate</button>
+      </div>
+
+      <div class="plot-container card" id="plotContainer">
+        <div class="plot-empty">Select options above and click Generate</div>
+      </div>
+    </section>
+
+    <!-- ===== TRAIN SECTION ===== -->
+    <section class="section" id="sec-train">
+      <div class="section-header">
+        <h1>Train Model</h1>
+        <p class="subtitle">Configure and train a machine learning model</p>
+      </div>
+
+      <div class="train-grid">
+        <div class="card">
+          <h3 class="card-title">Target & Features</h3>
+          <div class="control-group">
+            <label>Target Column</label>
+            <select id="targetSelect"></select>
+          </div>
+          <div class="control-group">
+            <label>Feature Columns <span class="hint">(Click to toggle selection)</span></label>
+            <select id="featuresSelect" multiple size="8"></select>
+            <div class="feature-actions">
+              <button class="btn-ghost" onclick="selectAllFeatures()">Select All</button>
+              <button class="btn-ghost" onclick="clearFeatures()">Clear</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3 class="card-title">Model Settings</h3>
+          <div class="control-group">
+            <label>Algorithm</label>
+            <select id="modelChoice">
+              <option value="Random Forest">Random Forest</option>
+              <option value="Gradient Boosting">Gradient Boosting</option>
+              <option value="Linear/Logistic Regression">Linear / Logistic Regression</option>
+            </select>
+          </div>
+          <div class="control-group">
+            <label>Scaler</label>
+            <select id="scalerChoice">
+              <option value="StandardScaler">Standard Scaler</option>
+              <option value="MinMaxScaler">MinMax Scaler</option>
+            </select>
+          </div>
+          <div class="control-group">
+            <label>Imputer Strategy</label>
+            <select id="imputerStrategy">
+              <option value="median">Median</option>
+              <option value="mean">Mean</option>
+              <option value="most_frequent">Most Frequent</option>
+            </select>
+          </div>
+          <div class="control-group">
+            <label>Test Size: <span id="testSizeVal">20%</span></label>
+            <input type="range" id="testSize" min="10" max="40" value="20" oninput="document.getElementById('testSizeVal').innerText=this.value+'%'"/>
+          </div>
+          <button class="btn-primary full-width" id="trainBtn" onclick="trainModel()">
+            <span id="trainBtnText">⚙ Train Model</span>
+          </button>
+        </div>
+      </div>
+
+      <div id="trainResultArea" style="margin-top:24px;display:none">
+        <div class="card">
+          <h3 class="card-title">Training Results</h3>
+          <div id="metricsDisplay" class="metrics-display"></div>
+          <div class="model-actions" id="modelActions" style="margin-top:16px;display:none">
+            <button class="btn-secondary" onclick="goToPredict()">▶ Make Predictions</button>
+            <button class="btn-ghost" id="downloadBtn">⬇ Download Model</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== PREDICT SECTION ===== -->
+    <section class="section" id="sec-predict">
+      <div class="section-header">
+        <h1>Make Predictions</h1>
+        <p class="subtitle">Input feature values to get a prediction</p>
+      </div>
+
+      <div id="predictNoModel" class="card empty-state">
+        <p>Train a model first to make predictions.</p>
+        <button class="btn-primary" onclick="showSection('train')">Go to Train</button>
+      </div>
+
+      <div id="predictForm" style="display:none">
+        <div class="card">
+          <h3 class="card-title">Input Features</h3>
+          <div id="predictInputs" class="predict-inputs"></div>
+          <button class="btn-primary" style="margin-top:16px" onclick="runPrediction()">▶ Predict</button>
+        </div>
+        <div id="predictionResult" class="card prediction-result" style="display:none">
+          <div class="prediction-label">Prediction</div>
+          <div class="prediction-value" id="predictionValue"></div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script src="/static/app.js"></script>
+</body>
+</html>
